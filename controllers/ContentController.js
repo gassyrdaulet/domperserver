@@ -1,5 +1,6 @@
 import conn from "../db.js";
 import * as dotenv from "dotenv";
+import fs from "fs/promises";
 dotenv.config();
 
 export const postHelp = async (req, res) => {
@@ -28,5 +29,17 @@ export const getHelp = async (req, res) => {
   } catch (e) {
     res.status(500).json({ message: "Ошибка в сервере: " + e });
     console.log(e);
+  }
+};
+
+export const uploadXML = async (req, res) => {
+  try {
+    const { filename, content } = req.body;
+    await fs.writeFile("./public/" + filename + ".xml", content);
+    console.log("Successfully uploaded new file : " + filename);
+    res.status(200).json({ message: "success" });
+  } catch (e) {
+    console.log("Failed ..." + e);
+    res.status(500).json({ message: "A server error occured: " + e });
   }
 };
