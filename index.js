@@ -7,6 +7,7 @@ import ContentRoutes from "./routes/ContentRoutes.js";
 import conn from "./db.js";
 import * as dotenv from "dotenv";
 import https from "https";
+import fs from "fs";
 
 dotenv.config();
 
@@ -39,7 +40,7 @@ app.listen(PORT, () => {
   console.log(`Server is LIVE. Go to http://[your-ip]:${PORT} to verify.`);
 });
 const httpsServer = https.createServer(credentials, app);
-httpsServer.listen(sPORT, () => {
+httpsServer.listen(SECURE_PORT, () => {
   console.log("HTTPS server started on port " + SECURE_PORT + "...");
 });
 
