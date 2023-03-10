@@ -32,6 +32,7 @@ app.use(
   })
 );
 app.use(bodyParser.json());
+app.use(express.static("public"));
 app.use("/api/auth/", AuthRoutes);
 app.use("/api/prices/", PriceRoutes);
 app.use("/api/content/", ContentRoutes);
