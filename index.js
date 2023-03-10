@@ -6,9 +6,23 @@ import PriceRoutes from "./routes/PriceRoutes.js";
 import ContentRoutes from "./routes/ContentRoutes.js";
 import conn from "./db.js";
 import * as dotenv from "dotenv";
+import https from "https";
+
 dotenv.config();
 
-const PORT = process.env.PORT ? process.env.PORT : 2929;
+const privateKey = fs.readFileSync("./keys/privkey.pem", "utf8");
+const certificate = fs.readFileSync("./keys/cert.pem", "utf8");
+const ca = fs.readFileSync("./keys/chain.pem", "utf8");
+
+const credentials = {
+  key: privateKey,
+  cert: certificate,
+  ca,
+};
+
+const PORT = process.env.PORT ? process.env.PORT : 9292;
+const SECURE_PORT = process.env.SECURE_PORT ? process.env.SECURE_PORT : 3636;
+
 const app = express();
 app.use(cors());
 app.use(
@@ -21,17 +35,12 @@ app.use("/api/auth/", AuthRoutes);
 app.use("/api/prices/", PriceRoutes);
 app.use("/api/content/", ContentRoutes);
 
-const test = async () => {
-  try {
-    console.log((await conn.query("describe users;"))[0]);
-  } catch (e) {
-    console.log(e);
-  }
-};
-// test();
-
 app.listen(PORT, () => {
   console.log(`Server is LIVE. Go to http://[your-ip]:${PORT} to verify.`);
+});
+const httpsServer = https.createServer(credentials, app);
+httpsServer.listen(sPORT, () => {
+  console.log("HTTPS server started on port " + SECURE_PORT + "...");
 });
 
 const checkForPremium = async () => {
