@@ -148,6 +148,7 @@ export const giveSubscription = async (req, res) => {
     }
     await conn.query(`UPDATE users SET ?  WHERE id = ${userId}`, {
       expiryms: Date.now() + days * 24 * 60 * 60 * 1000,
+      activated: "true",
     });
     res.status(200).json({ message: "Подписка была успешно предоставлена!" });
   } catch (e) {
