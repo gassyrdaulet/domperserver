@@ -22,7 +22,12 @@ export const auth = (req, res, next) => {
         logout: true,
       });
     } else {
-      res.status(500).json({ message: e.name });
+      res
+        .status(500)
+        .json({
+          message: "Ваш токен авторизации истек. Пожалуйста повторите вход.",
+          logout: true,
+        });
     }
   }
 };
