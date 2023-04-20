@@ -5,9 +5,10 @@ import { validationResult } from "express-validator";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const generateAccesToken = (id, role, user_uid) => {
+const generateAccesToken = (id, store_id, role, user_uid) => {
   const payload = {
     id,
+    store_id,
     role,
     user_uid,
   };
@@ -34,7 +35,7 @@ export const login = async (req, res) => {
     if (!isPassValid) {
       return res.status(400).json({ message: "Неверный пароль." });
     }
-    const token = generateAccesToken(user.id);
+    const token = generateAccesToken(user.id, user.store_id);
     return res.json({
       token,
       user: {

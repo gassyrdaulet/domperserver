@@ -24,7 +24,6 @@ export const getHelp = async (req, res) => {
     const { type } = req.body;
     const sql = `SELECT * FROM helpcontent WHERE ?`;
     const result = (await conn.query(sql, { type }))[0];
-    console.log(result, type);
     res.send(result);
   } catch (e) {
     res.status(500).json({ message: "Ошибка в сервере: " + e });

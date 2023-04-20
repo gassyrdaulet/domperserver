@@ -9,6 +9,8 @@ import {
   deletePrice,
   editPrice,
   getOnePrice,
+  signIn,
+  sync,
 } from "../controllers/PriceController.js";
 import { auth } from "../middleware/RouterSecurity.js";
 
@@ -118,5 +120,7 @@ router.post("/delete", auth, deletePrice);
 router.post("/change", auth, changePriceActivity);
 router.post("/all", auth, getAllPrices);
 router.post("/details", auth, getOnePrice);
+router.post("/signin", auth, signIn);
+router.post("/sync", auth, sync);
 
 export default router;

@@ -15,4 +15,4 @@ const dataBaseConfigProduction = {
   database: "domper",
 };
 
-export default mysql.createPool(dataBaseConfig);
+export default mysql.createPool(dataBaseConfigProduction);

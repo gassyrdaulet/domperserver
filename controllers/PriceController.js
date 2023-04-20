@@ -1,6 +1,8 @@
 import conn from "../db.js";
 import { validationResult } from "express-validator";
 import * as dotenv from "dotenv";
+import setCookie from "set-cookie-parser";
+import axios from "axios";
 dotenv.config();
 
 export const getTableName = async (id) => {
@@ -12,6 +14,75 @@ export const getTableName = async (id) => {
   } catch (e) {
     console.log(e);
     return "0";
+  }
+};
+
+const kaspiLoginHeaders = {
+  headers: {
+    accept: "application/json, text/plain, */*",
+    "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+    "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+  },
+};
+
+export const signIn = async (req, res) => {
+  try {
+    const { id, store_id } = req.user;
+    const { username, password } = req.body;
+    const loginResult = await axios.post(
+      "https://kaspi.kz/mc/api/login",
+      {
+        username,
+        password,
+      },
+      { ...kaspiLoginHeaders }
+    );
+    const cookies = setCookie.parse(loginResult);
+    const result = await axios.post(
+      "https://kaspi.kz/merchantcabinet/api/offer/",
+      // "https://kaspi.kz/merchantcabinet/api/offer/pending/wotrash",
+      {
+        count: 1000,
+        offerStatus: "ACTIVE",
+        start: 0,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json;charset=UTF-8",
+          cookie: `${cookies[2].name}=${cookies[2].value};`,
+        },
+      }
+    );
+    const tablename = await getTableName(id);
+    const oldOffers = (await conn.query(`SELECT * FROM ${tablename}`))[0];
+    res
+      .status(200)
+      .json({ store_id, newOffers: result?.data?.offers, oldOffers });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Ошибка в сервере " + e });
+  }
+};
+
+export const sync = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { newOffers } = req.body;
+    const tablename = await getTableName(id);
+    for (let offer of newOffers) {
+      if (offer.id === "new") {
+        delete offer.id;
+        await conn.query(`INSERT INTO ${tablename} SET ?`, offer);
+      } else {
+        await conn.query(`UPDATE ${tablename} SET ? WHERE id = "${offer.id}"`, {
+          activated: offer.activated,
+        });
+      }
+    }
+    res.status(200).json({ message: "Синхронизация прошла успешно!" });
+  } catch (e) {
+    console.log(e.message);
+    res.status(500).json({ message: "Ошибка в сервере: " + e });
   }
 };
 
@@ -56,7 +127,7 @@ export const editPrice = async (req, res) => {
     res.status(200).json({ message: "Товар успешно отредактирован!" });
   } catch (e) {
     console.log(e);
-    res.status(500).json({ message: "Ошибка в сервере" + e });
+    res.status(500).json({ message: "Ошибка в сервере: " + e });
   }
 };
 
@@ -88,7 +159,7 @@ export const newPrice = async (req, res) => {
     res.status(200).json({ message: "Товар успешно добавлен!" });
   } catch (e) {
     console.log(e);
-    res.status(500).json({ message: "Ошибка в сервере" + e });
+    res.status(500).json({ message: "Ошибка в сервере: " + e });
   }
 };
 
@@ -102,7 +173,7 @@ export const getOnePrice = async (req, res) => {
     )[0];
     res.send(price);
   } catch (e) {
-    res.status(500).json({ message: "Ошибка в сервере" + e });
+    res.status(500).json({ message: "Ошибка в сервере: " + e });
   }
 };
 
