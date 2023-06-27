@@ -55,14 +55,14 @@ const checkForPremium = async () => {
     );
     const sql = `SELECT * FROM users`;
     const sql2 = `SELECT expiryms FROM users WHERE ?`;
-    const sql3 = `UPDATE users SET activated = "false" WHERE ?`;
+    const sql3 = `UPDATE users SET premium = "no" WHERE ?`;
     const users = (await conn.query(sql))[0];
     await Promise.all(
       users.map(async (user) => {
         try {
           if (Date.now() > parseInt(user.expiryms)) {
             console.log("Premium on id:" + user.id + " has expired!");
-            if (user.activated === "yes") {
+            if (user.premium === "yes") {
               console.log("Deactivating premium on user: " + user.id);
               await conn.query(sql3, { id: user.id });
             }
@@ -85,4 +85,4 @@ const checkForPremium = async () => {
     console.log(e);
   }
 };
-checkForPremium();
+// checkForPremium();

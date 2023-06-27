@@ -66,7 +66,6 @@ export const registration = async (req, res) => {
         .json({ message: "Пользователь с таким e-mail уже существует." });
     } else {
       const hashPassword = await bcrypt.hash(password, 5);
-
       await conn.query(sql2, {
         email: email.toLowerCase(),
         name,
@@ -103,10 +102,14 @@ export const getUserInfo = async (req, res) => {
         store_id: user.store_id,
         linkxml: process.env.SERVER_URL + user.tablename + ".xml",
         damp: user.damp,
+        kaspimerlogin: user.kaspimerlogin,
+        kaspimerpassword: user.kaspimerpassword,
         city: user.city,
         expiryms: user.expiryms,
         difference: parseInt(user.expiryms) - Date.now(),
         whatsapp: process.env.WHATSAPP_NUMBER,
+        activated: user.activated === "yes",
+        mockseller: user.mockseller,
       },
     });
   } catch (e) {
@@ -127,6 +130,9 @@ export const editAccount = async (req, res) => {
       delete data.password;
     } else {
       data.password = await bcrypt.hash(data.password, 5);
+    }
+    if (data.kaspimerpassword === "EynNY@D4870064") {
+      delete data.kaspimerpassword;
     }
     await conn.query(`UPDATE users SET ?  WHERE id = ${id}`, data);
     res.status(200).json({ message: "Настройки успешно сохранены!" });
@@ -149,9 +155,33 @@ export const giveSubscription = async (req, res) => {
     }
     await conn.query(`UPDATE users SET ?  WHERE id = ${userId}`, {
       expiryms: Date.now() + days * 24 * 60 * 60 * 1000,
-      activated: "true",
+      premium: "true",
     });
     res.status(200).json({ message: "Подписка была успешно предоставлена!" });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Ошибка в сервере! " + e });
+  }
+};
+
+export const changeActivation = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const sql = `SELECT * FROM users WHERE id = ${id}`;
+    const user = (await conn.query(sql))[0][0];
+    if (user.activated === "yes") {
+      await conn.query(`UPDATE users SET activated = "no"  WHERE id = ${id}`);
+      res.status(200).json({
+        message: "Теперь работа Домпера приостановлена на этом аккаунте!",
+      });
+      return;
+    } else {
+      await conn.query(`UPDATE users SET activated = "yes"  WHERE id = ${id}`);
+      res
+        .status(200)
+        .json({ message: "Работа Домпера продолжена на этом аккаунте!" });
+      return;
+    }
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: "Ошибка в сервере! " + e });

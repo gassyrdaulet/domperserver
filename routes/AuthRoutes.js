@@ -6,6 +6,7 @@ import {
   getUserInfo,
   editAccount,
   giveSubscription,
+  changeActivation,
 } from "../controllers/AuthController.js";
 import { auth } from "../middleware/RouterSecurity.js";
 
@@ -129,5 +130,6 @@ router.post(
 );
 router.get("/userinfo", auth, getUserInfo);
 router.post("/subscription", auth, giveSubscription);
+router.post("/changeactivation", auth, changeActivation);
 
 export default router;

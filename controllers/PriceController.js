@@ -38,12 +38,10 @@ export const signIn = async (req, res) => {
       { ...kaspiLoginHeaders }
     );
     const cookies = setCookie.parse(loginResult);
-    const result = await axios.post(
+    const prices = await axios.post(
       "https://kaspi.kz/merchantcabinet/api/offer/",
-      // "https://kaspi.kz/merchantcabinet/api/offer/pending/wotrash",
       {
         count: 1000,
-        offerStatus: "ACTIVE",
         start: 0,
       },
       {
@@ -53,13 +51,14 @@ export const signIn = async (req, res) => {
         },
       }
     );
+
     const tablename = await getTableName(id);
     const oldOffers = (await conn.query(`SELECT * FROM ${tablename}`))[0];
     res
       .status(200)
-      .json({ store_id, newOffers: result?.data?.offers, oldOffers });
+      .json({ store_id, newOffers: prices?.data?.offers, oldOffers });
   } catch (e) {
-    console.log(e);
+    console.log(e.name, e.message, e?.response?.statusText);
     res.status(500).json({ message: "Ошибка в сервере " + e });
   }
 };
@@ -69,19 +68,30 @@ export const sync = async (req, res) => {
     const { id } = req.user;
     const { newOffers } = req.body;
     const tablename = await getTableName(id);
-    for (let offer of newOffers) {
-      if (offer.id === "new") {
-        delete offer.id;
-        await conn.query(`INSERT INTO ${tablename} SET ?`, offer);
-      } else {
-        await conn.query(`UPDATE ${tablename} SET ? WHERE id = "${offer.id}"`, {
-          activated: offer.activated,
-        });
-      }
-    }
+    await Promise.all(
+      newOffers.map(async (offer) => {
+        if (offer.id === "new") {
+          delete offer.id;
+          await conn.query(`INSERT INTO ${tablename} SET ?`, offer);
+        } else if (offer.activated === "delete") {
+          await conn.query(`DELETE FROM ${tablename} WHERE id = ${offer.id}`);
+        } else {
+          await conn.query(
+            `UPDATE ${tablename} SET ? WHERE id = "${offer.id}"`,
+            {
+              activated: offer.activated,
+              minprice: offer.minprice,
+              actualprice: offer.actualprice,
+              maxprice: offer.maxprice,
+            }
+          );
+        }
+      })
+    );
     res.status(200).json({ message: "Синхронизация прошла успешно!" });
   } catch (e) {
     console.log(e.message);
+    console.log(e);
     res.status(500).json({ message: "Ошибка в сервере: " + e });
   }
 };
