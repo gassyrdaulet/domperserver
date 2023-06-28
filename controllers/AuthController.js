@@ -76,6 +76,7 @@ export const registration = async (req, res) => {
         city,
         store_name,
         store_id,
+        type: "xlsx",
       });
       await conn.query(`CREATE TABLE pricelist${store_id} LIKE pricelist`);
       return res
@@ -110,6 +111,7 @@ export const getUserInfo = async (req, res) => {
         whatsapp: process.env.WHATSAPP_NUMBER,
         activated: user.activated === "yes",
         mockseller: user.mockseller,
+        type: user.type,
       },
     });
   } catch (e) {
