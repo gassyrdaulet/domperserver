@@ -72,13 +72,6 @@ router.post(
       min: 5,
       max: 20,
     }),
-    check(
-      "store_name",
-      "Название магазина содержит недопустимые символы!"
-    ).custom((v) => {
-      const regExpr = /[^a-zA-Z0-9]/;
-      return v.search(regExpr) !== -1 ? false : true;
-    }),
   ],
   registration
 );
