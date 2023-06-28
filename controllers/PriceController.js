@@ -83,6 +83,7 @@ export const sync = async (req, res) => {
               minprice: offer.minprice,
               actualprice: offer.actualprice,
               maxprice: offer.maxprice,
+              suk2: offer.suk2,
             }
           );
         }
