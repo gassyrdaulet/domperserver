@@ -29,6 +29,7 @@ export const signIn = async (req, res) => {
   try {
     const { id, store_id } = req.user;
     const { username, password } = req.body;
+
     const loginResult = await axios.post(
       "https://kaspi.kz/mc/api/login",
       {
@@ -38,25 +39,47 @@ export const signIn = async (req, res) => {
       { ...kaspiLoginHeaders }
     );
     const cookies = setCookie.parse(loginResult);
-    const prices = await axios.post(
-      "https://kaspi.kz/merchantcabinet/api/offer/",
-      {
-        count: 1000,
-        start: 0,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json;charset=UTF-8",
-          cookie: `${cookies[2].name}=${cookies[2].value};`,
-        },
-      }
-    );
+
+    const getPrices = async (p, l = 100) => {
+      const resultFetch = await fetch(
+        "https://kaspi.kz/yml/bff/offer-view/list?" +
+          new URLSearchParams({
+            m: store_id,
+            p,
+            l,
+          }),
+        {
+          headers: {
+            cookie: `${cookies[2].name}=${cookies[2].value};`,
+            Referer: "https://kaspi.kz/mc/",
+          },
+          method: "GET",
+        }
+      );
+      const prices = await resultFetch.json();
+      return prices;
+    };
+
+    const prices = [];
+    const { total } = await getPrices(0, 1);
+    for (let i = 0; i < total; i = i + 100) {
+      const { data } = await getPrices(Math.ceil(i / 100));
+      const activeOffers = data.map((item) => {
+        return {
+          ...item,
+          offerStatus: item.available ? "ACTIVE" : "ARCHIVE",
+          masterProduct: { sku: item.masterSku },
+          priceMin: item.minPrice ? item.minPrice : 0,
+        };
+      });
+      prices.push(...activeOffers);
+    }
+    console.log(prices.length);
+    console.log(prices[0]);
 
     const tablename = await getTableName(id);
     const oldOffers = (await conn.query(`SELECT * FROM ${tablename}`))[0];
-    res
-      .status(200)
-      .json({ store_id, newOffers: prices?.data?.offers, oldOffers });
+    res.status(200).json({ store_id, newOffers: prices, oldOffers });
   } catch (e) {
     console.log(e.name, e.message, e?.response?.statusText);
     res.status(500).json({ message: "Ошибка в сервере " + e });
