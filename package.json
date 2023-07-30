@@ -24,6 +24,7 @@
     "https": "^1.0.0",
     "jsonwebtoken": "^9.0.0",
     "mysql2": "^3.1.2",
+    "node-fetch": "^3.3.2",
     "nodemon": "^2.0.20",
     "set-cookie-parser": "^2.6.0"
   }

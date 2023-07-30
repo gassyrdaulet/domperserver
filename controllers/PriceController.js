@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 import setCookie from "set-cookie-parser";
 import axios from "axios";
 dotenv.config();
+import fetch from "node-fetch";
 
 export const getTableName = async (id) => {
   try {
